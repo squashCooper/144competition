@@ -17,6 +17,10 @@ import torchvision.io import read_image
 # Input data files are available in the read-only "../input/" directory
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
 
+# import pretrained model (resnet18)
+import torchvision.models as models
+model = models.resnet18(weights="IMAGENET1K_V1")
+
 import os
 for dirname, _, filenames in os.walk('/kaggle/input'):
     for filename in filenames:
