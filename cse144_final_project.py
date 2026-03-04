@@ -16,6 +16,19 @@ import torchvision.io import read_image
 import os
 
 
+# import ImageFolder
+from torchvision.datasets import ImageFolder
+
+
+#correct labels of the dataset (in order)
+class SortedImageFolder(ImageFolder):
+    def findClasses(self, directory):
+        classes = sorted(os.listdir(directory), key=lamba x:int(x))
+        classToIndex = {className: int(className) for className in classes}
+        return classes, classToIndex
+
+train_dataset = SortedImageFolder("train", transform=transform)
+
 # Input data files are available in the read-only "../input/" directory
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
 
