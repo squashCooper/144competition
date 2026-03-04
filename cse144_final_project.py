@@ -13,6 +13,8 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
 import matplotlib.pyplot as plt
 import torchvision.io import read_image
+import os
+
 
 # Input data files are available in the read-only "../input/" directory
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
