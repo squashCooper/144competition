@@ -1,45 +1,51 @@
-# This Python 3 environment comes with many helpful analytics libraries installed
-# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
-# For example, here's several helpful packages to load
+# Aria, Tori, Parisa
 
-#Aria, Tori, Parisa
-# hi
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import numpy as np
+import pandas as pd
 import os
 import torch
-import torch.utils.data import Dataset
-from torchvision import datasets
-from torchvision.transforms import ToTensor, Lambda
-import matplotlib.pyplot as plt
-import torchvision.io import read_image
-import os
+from torch.utils.data import Dataset
 
-
-# import ImageFolder
 from torchvision.datasets import ImageFolder
+from torchvision import transforms
+from torchvision.io import read_image
 
-
-#correct labels of the dataset (in order)
-class SortedImageFolder(ImageFolder):
-    def findClasses(self, directory):
-        classes = sorted(os.listdir(directory), key=lamba x:int(x))
-        classToIndex = {className: int(className) for className in classes}
-        return classes, classToIndex
-
-train_dataset = SortedImageFolder("train", transform=transform)
-
-# Input data files are available in the read-only "../input/" directory
-# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
-
-# import pretrained model (resnet18)
+import matplotlib.pyplot as plt
 import torchvision.models as models
-model = models.resnet18(weights="IMAGENET1K_V1")
 
-import os
+
+# resize images
+transform = transforms.Compose([
+    transforms.Resize((224,224)),
+    transforms.ToTensor()
+])
+
+
+# ensure classes are sorted numerically
+class SortedImageFolder(ImageFolder):
+    def find_classes(self, directory):
+        classes = sorted(os.listdir(directory), key=lambda x: int(x))
+        class_to_idx = {class_name: int(class_name) for class_name in classes}
+        return classes, class_to_idx
+
+
+train_dataset = SortedImageFolder(
+    "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
+    transform=transform
+)
+
+
+print("Number of training images:", len(train_dataset))
+print("Classes:", train_dataset.classes[:10])
+
+
+# load pretrained resnet
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+
+print("Model loaded successfully")
+
+
+# show dataset files
 for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames:
+    for filename in filenames[:5]:
         print(os.path.join(dirname, filename))
-
-# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
-# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
