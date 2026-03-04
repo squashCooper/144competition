@@ -49,3 +49,10 @@ print("Model loaded successfully")
 for dirname, _, filenames in os.walk('/kaggle/input'):
     for filename in filenames[:5]:
         print(os.path.join(dirname, filename))
+
+
+#TO DO (aria push test)
+# Create dataloader
+# Modify resnet layer to 100 classes
+# start training
+# train on 20 epochs
