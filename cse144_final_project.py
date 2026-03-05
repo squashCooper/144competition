@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import torch
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
@@ -22,7 +23,6 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-
 # ensure classes are sorted numerically
 class SortedImageFolder(ImageFolder):
     def find_classes(self, directory):
@@ -35,14 +35,20 @@ full_train = SortedImageFolder(
     "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
     transform=transform
 )
-train_dataset, val_set = torch.utils.data.random_split(full_train, [800, 200]) # update later
+
+# get data split
+total = len(full_train)
+val_size = int(0.1 * total)
+train_size = total - val_size  
+
+train_dataset, val_set = torch.utils.data.random_split(full_train, [train_size, val_size]) # update later
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
 
 
 print("Number of training images:", len(train_dataset))
-print("Classes:", train_dataset.classes[:10])
+print("Classes:", full_train.classes[:10])
 
 # --MODEL-------
 
