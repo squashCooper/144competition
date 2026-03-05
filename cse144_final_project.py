@@ -92,3 +92,47 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
 # Modify resnet layer to 100 classes
 # start training
 # train on 20 epochs
+
+# ---------------------- Training ----------------------
+n_epochs = 20
+log_every = 20
+
+print("Starting training")
+print(f"Total epochs: {n_epochs} | device: {device} | optimizer: Adam | loss: CrossEntropyLoss")
+
+for epoch in range(1, n_epochs + 1):
+    model.train()
+    running_loss, correct, seen = 0.0, 0, 0
+    print(f"\nEpoch {epoch}/{n_epochs}")
+
+    for batch_idx, (x, y) in enumerate(train_loader, start=1):
+        # forward + backward
+        x = x.to(device)
+        y = y.to(device).long()
+        optimizer.zero_grad()
+        logits = model(x)
+        loss = criterion(logits, y)
+        loss.backward()
+        optimizer.step()
+
+        batch_size = x.size(0)
+        running_loss += loss.item() * batch_size
+        pred = torch.argmax(logits, dim=1)
+        correct += (pred == y).sum().item()
+        seen += batch_size
+
+        if batch_idx % log_every == 0:
+            avg_loss = running_loss / seen
+            avg_acc = correct / seen
+            print(
+                f"  Batch {batch_idx}/{len(train_loader)} | "
+                f"Loss: {loss.item():.4f} | "
+                f"AvgLoss: {avg_loss:.4f} | "
+                f"AvgAcc: {avg_acc:.4f}"
+            )
+
+    epoch_loss = running_loss / seen
+    epoch_acc = correct / seen
+    print(f"Epoch {epoch}/{n_epochs} complete -> loss: {epoch_loss:.4f}, acc: {epoch_acc:.4f}")
+
+print("\nTraining complete")
