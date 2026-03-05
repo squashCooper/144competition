@@ -45,6 +45,15 @@ model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 print("Model loaded successfully")
 
 
+from torchvision import datasets, transforms
+import matplotlib.pyplot as plt
+
+# resize images to 224x224 as required
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor()
+])
+
 # show dataset files
 for dirname, _, filenames in os.walk('/kaggle/input'):
     for filename in filenames[:5]:
