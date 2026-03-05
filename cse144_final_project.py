@@ -33,6 +33,10 @@ train_dataset = SortedImageFolder(
     "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
     transform=transform
 )
+train_dataset, val_set = torch.utils.data.random_split(full_train, [55000, 5000])
+
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
 
 
 print("Number of training images:", len(train_dataset))
