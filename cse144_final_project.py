@@ -17,11 +17,13 @@ import torchvision.models as models
 import torch.nn as nn
 
 
-class PreProcessing (ImageFolder):
+class PreProcessing(ImageFolder):
     # data augmentation
-    # resize and normalize
+    # resize, randomly rotate, random brightness, normalize
     transform = transforms.Compose([
         transforms.Resize((224,224)),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
