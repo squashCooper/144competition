@@ -19,7 +19,7 @@ import torch.nn as nn
 
 class PreProcessing(ImageFolder):
     # data augmentation
-    # resize and normalize
+    # resize, randomly rotate, random brightness, normalize
     transform = transforms.Compose([
         transforms.Resize((224,224)),
         transforms.RandomRotation(15),
