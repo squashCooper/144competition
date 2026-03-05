@@ -16,7 +16,7 @@ import torchvision.models as models
 
 import torch.nn as nn
 
-
+# -- PREPROCESSING -------
 class PreProcessing(ImageFolder):
     # data augmentation
     # resize, randomly rotate, random brightness, normalize
@@ -34,7 +34,7 @@ class PreProcessing(ImageFolder):
         class_to_idx = {class_name: int(class_name) for class_name in classes}
         return classes, class_to_idx
 
-
+# --DATALOADER----------
 full_train = PreProcessing(
     "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
     transform=PreProcessing.transform
