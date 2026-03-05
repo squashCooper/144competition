@@ -87,12 +87,6 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
         print(os.path.join(dirname, filename))
 
 
-#TO DO (aria push test)
-# Create dataloader
-# Modify resnet layer to 100 classes
-# start training
-# train on 20 epochs
-
 # ---------------------- Training ----------------------
 n_epochs = 20
 log_every = 20
