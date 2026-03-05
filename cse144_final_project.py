@@ -62,9 +62,22 @@ print("Model loaded successfully")
 for param in model.parameters():
     param.requires_grad = False
 
-# Replace final layer for 100 classes
+# fine tune the last block 
+for param in model.layer4.parameters():
+    param.requires_grad = True
+
 model.fc = nn.Linear(model.fc.in_features, 100)
 
+device = torch.device("cpu")
+model = model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(
+    filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3
+)
+
+
+#!!! from here we can implement training loop !!!!
 
 # show dataset files
 for dirname, _, filenames in os.walk('/kaggle/input'):
