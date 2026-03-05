@@ -17,27 +17,25 @@ import torchvision.models as models
 import torch.nn as nn
 
 
-# data augmentation
-# resize and normalize
-transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+class PreProcessing (ImageFolder):
+    # data augmentation
+    # resize and normalize
+    transform = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
-
-
-# ensure classes are sorted numerically
-class SortedImageFolder(ImageFolder):
+    # ensure classes are sorted numerically
     def find_classes(self, directory):
         classes = sorted(os.listdir(directory), key=lambda x: int(x))
         class_to_idx = {class_name: int(class_name) for class_name in classes}
         return classes, class_to_idx
 
 
-full_train = SortedImageFolder(
+full_train = PreProcessing(
     "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
-    transform=transform
+    transform=PreProcessing.transform
 )
 
 # get data split
