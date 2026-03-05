@@ -51,7 +51,7 @@ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
 
 
-print("Number of training images:", len(train_dataset))
+print("Number of training images:", len(full_train))
 print("Classes:", full_train.classes[:10])
 
 # --MODEL-------
