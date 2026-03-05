@@ -29,7 +29,7 @@ class SortedImageFolder(ImageFolder):
         return classes, class_to_idx
 
 
-train_dataset = SortedImageFolder(
+full_train = SortedImageFolder(
     "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
     transform=transform
 )
