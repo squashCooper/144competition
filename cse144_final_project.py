@@ -13,6 +13,8 @@ from torchvision.io import read_image
 import matplotlib.pyplot as plt
 import torchvision.models as models
 
+import torch.nn as nn
+
 
 # resize images
 transform = transforms.Compose([
@@ -42,11 +44,19 @@ val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
 print("Number of training images:", len(train_dataset))
 print("Classes:", train_dataset.classes[:10])
 
+# --MODEL-------
 
 # load pretrained resnet
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-
 print("Model loaded successfully")
+
+# Freeze all layers first
+for param in model.parameters():
+    param.requires_grad = False
+
+# Replace final layer for 100 classes
+model.fc = nn.Linear(model.fc.in_features, 100)
+
 
 # show dataset files
 for dirname, _, filenames in os.walk('/kaggle/input'):
