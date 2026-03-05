@@ -87,9 +87,15 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
         print(os.path.join(dirname, filename))
 
 
+#TO DO (aria push test)
+# Create dataloader
+# Modify resnet layer to 100 classes
+# start training
+# train on 20 epochs
+
 # ---------------------- Training ----------------------
-n_epochs = 20
-log_every = 20
+n_epochs = 10
+log_every = 10
 
 print("Starting training")
 print(f"Total epochs: {n_epochs} | device: {device} | optimizer: Adam | loss: CrossEntropyLoss")
@@ -130,3 +136,46 @@ for epoch in range(1, n_epochs + 1):
     print(f"Epoch {epoch}/{n_epochs} complete -> loss: {epoch_loss:.4f}, acc: {epoch_acc:.4f}")
 
 print("\nTraining complete")
+
+model.eval()
+total_loss = 0.0
+total_correct = 0
+total_samples = 0
+
+with torch.no_grad():
+    for x, y in dv_set:
+        x, y = x.to(device), y.to(device).long()
+
+        pred = model(x)
+        loss = criterion(pred, y)
+
+        batch_size = x.size(0)
+        total_loss += loss.item() * batch_size
+
+        # optional but useful
+        preds = torch.argmax(pred, dim=1)
+        total_correct += (preds == y).sum().item()
+        total_samples += batch_size
+
+avg_loss = total_loss / len(dv_set.dataset)
+avg_acc = total_correct / total_samples if total_samples > 0 else 0.0
+
+print(f"Validation loss: {avg_loss:.4f}")
+print(f"Validation acc:  {avg_acc:.4f}")   # optional
+
+
+
+#!!! from here we can implement training loop !!!!
+
+# show dataset files
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames[:5]:
+        print(os.path.join(dirname, filename))
+
+
+#TO DO (aria push test)
+# Create dataloader
+# Modify resnet layer to 100 classes
+# start training
+# train on 20 epochs
+
