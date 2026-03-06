@@ -117,7 +117,7 @@ model.fc = nn.Linear(model.fc.in_features, 100)
 device = torch.device("cuda")
 model = model.to(device)
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 optimizer = torch.optim.AdamW(
     filter(lambda p: p.requires_grad, model.parameters()), 
     lr=2e-4, 
@@ -132,7 +132,7 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
         print(os.path.join(dirname, filename))
 
 # ---------------------- Training ----------------------
-n_epochs = 10
+n_epochs = 15
 log_every = 10
 history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
 best_val_acc = 0.0
