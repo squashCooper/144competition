@@ -1,5 +1,3 @@
-# Aria, Tori, Parisa
-
 import numpy as np
 import pandas as pd
 import os
@@ -16,7 +14,52 @@ import torchvision.models as models
 
 import torch.nn as nn
 
+
+# -- TRAIN ONE EPOCH ------
+def train_one_epoch(model, train_loader):    
+    model.train()
+    correct = 0
+    total = 0
+    cumulative_loss = 0.0
+    for data, target in train_loader:
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        cumulative_loss += loss.item() * data.size(0)
+        _, predicted = torch.max(output.data, 1)
+        total += target.size(0)
+        correct += (predicted == target).sum().item()
+    avg_loss = cumulative_loss / total
+    accuracy = correct / total
+    return avg_loss, accuracy
+
+# -- EVALUATE ------ 
+def evaluate(model, loader):
+    model.eval()
+    cumulative_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data, target in loader:
+            data, target = data.to(device), target.to(device)
+            outputs = model(data)
+            loss = criterion(outputs, target)
+            cumulative_loss += loss.item() * data.size(0)
+            _, predicted = torch.max(outputs, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
+    
+    avg_loss = cumulative_loss / total
+    accuracy = correct / total 
+
+    return avg_loss, accuracy
+
 # -- PREPROCESSING -------
+
+
 class PreProcessing(ImageFolder):
     # data augmentation
     # resize, randomly rotate, random brightness, normalize
@@ -58,7 +101,7 @@ print("Classes:", full_train.classes[:10])
 # --MODEL-------
 
 # load pretrained resnet
-model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 print("Model loaded successfully")
 
 # Freeze all layers first
@@ -71,14 +114,15 @@ for param in model.layer4.parameters():
 
 model.fc = nn.Linear(model.fc.in_features, 100)
 
-device = torch.device("cpu")
+device = torch.device("cuda")
 model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(
-    filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3
+optimizer = torch.optim.AdamW(
+    filter(lambda p: p.requires_grad, model.parameters()), 
+    lr=2e-4, 
+    weight_decay=1e-2
 )
-
 
 #!!! from here we can implement training loop !!!!
 
@@ -87,54 +131,31 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
     for filename in filenames[:5]:
         print(os.path.join(dirname, filename))
 
-
-#TO DO (aria push test)
-# Create dataloader
-# Modify resnet layer to 100 classes
-# start training
-# train on 20 epochs
-
 # ---------------------- Training ----------------------
-n_epochs = 5
+n_epochs = 10
 log_every = 10
-
+history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+best_val_acc = 0.0
+best_epoch = -1
+ckpt_path = "best_model.pth"
 print("Starting training")
 print(f"Total epochs: {n_epochs} | device: {device} | optimizer: Adam | loss: CrossEntropyLoss")
 
-for epoch in range(1, n_epochs + 1):
-    model.train()
-    running_loss, correct, seen = 0.0, 0, 0
-    print(f"\nEpoch {epoch}/{n_epochs}")
+for epoch in range(n_epochs):
+    train_loss, train_acc = train_one_epoch(model, train_loader)
+    val_loss, val_acc = evaluate(model, val_loader)
+    history["train_loss"].append(train_loss)
+    history["train_acc"].append(train_acc)
+    history["val_loss"].append(val_loss)
+    history["val_acc"].append(val_acc)
 
-    for batch_idx, (x, y) in enumerate(train_loader, start=1):
-        # forward + backward
-        x = x.to(device)
-        y = y.to(device).long()
-        optimizer.zero_grad()
-        logits = model(x)
-        loss = criterion(logits, y)
-        loss.backward()
-        optimizer.step()
+    if val_acc > best_val_acc:
+        best_val_acc = val_acc
+        best_epoch = epoch + 1
+        torch.save({"model_state_dict": model.state_dict(), "epoch": best_epoch}, ckpt_path)
 
-        batch_size = x.size(0)
-        running_loss += loss.item() * batch_size
-        pred = torch.argmax(logits, dim=1)
-        correct += (pred == y).sum().item()
-        seen += batch_size
-
-        if batch_idx % log_every == 0:
-            avg_loss = running_loss / seen
-            avg_acc = correct / seen
-            print(
-                f"  Batch {batch_idx}/{len(train_loader)} | "
-                f"Loss: {loss.item():.4f} | "
-                f"AvgLoss: {avg_loss:.4f} | "
-                f"AvgAcc: {avg_acc:.4f}"
-            )
-
-    epoch_loss = running_loss / seen
-    epoch_acc = correct / seen
-    print(f"Epoch {epoch}/{n_epochs} complete -> loss: {epoch_loss:.4f}, acc: {epoch_acc:.4f}")
+    # already returned by train_one_epoch; added val_loss and val_acc to output
+    print(f"Epoch {epoch + 1}/{n_epochs} complete -> loss: {train_loss:.4f}, acc: {train_acc:.4f} | val_loss: {val_loss:.4f}, val_acc: {val_acc:.4f}")
 
 print("\nTraining complete")
 
@@ -151,18 +172,3 @@ with torch.no_grad():
 
 avg_loss = total_loss / len(dv_set.dataset)  # averaged by total samples
 print(f"Validation Loss: {avg_loss:.4f}")
-
-
-#!!! from here we can implement training loop !!!!
-
-# show dataset files
-for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames[:5]:
-        print(os.path.join(dirname, filename))
-
-
-#TO DO (aria push test)
-# Create dataloader
-# Modify resnet layer to 100 classes
-# start training
-# train on 20 epochs
