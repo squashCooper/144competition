@@ -61,48 +61,34 @@ def evaluate(model, loader):
 
 
 class PreProcessing(ImageFolder):
+    # data augmentation
+    # resize, randomly rotate, random brightness, normalize
+    transform = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
     # ensure classes are sorted numerically
     def find_classes(self, directory):
         classes = sorted(os.listdir(directory), key=lambda x: int(x))
         class_to_idx = {class_name: int(class_name) for class_name in classes}
         return classes, class_to_idx
 
-    pass
-
-
-# -- TRANSFORMS ----------
-train_transform = transforms.Compose([
-    # data augmentation
-    # resize, randomly rotate, random brightness, normalize
-        transforms.Resize((224,224)),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
-val_transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
 # --DATALOADER----------
-data_root = "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train"
-full_train = PreProcessing(data_root, transform=train_transform)
+full_train = PreProcessing(
+    "/kaggle/input/ucsc-cse-144-winter-2026-final-project/train",
+    transform=PreProcessing.transform
+)
+
+# get data split
 total = len(full_train)
 val_size = int(0.1 * total)
 train_size = total - val_size  
 
-generator = torch.Generator().manual_seed(42)
-indices = torch.randperm(total, generator=generator).tolist()
-train_indices = indices[:train_size]
-val_indices = indices[train_size:]
-
-train_dataset = torch.utils.data.Subset(full_train, train_indices)
-val_set = torch.utils.data.Subset(
-    PreProcessing(data_root, transform=val_transform), val_indices
-)  # update later
+train_dataset, val_set = torch.utils.data.random_split(full_train, [train_size, val_size]) # update later
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
@@ -126,10 +112,7 @@ for param in model.parameters():
 for param in model.layer4.parameters():
     param.requires_grad = True
 
-model.fc = nn.Sequential(
-    nn.Dropout(p=0.3),
-    nn.Linear(model.fc.in_features, 100)
-)
+model.fc = nn.Linear(model.fc.in_features, 100)
 
 device = torch.device("cuda")
 model = model.to(device)
@@ -150,14 +133,13 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
 
 # ---------------------- Training ----------------------
 n_epochs = 10
-n_epochs = 10
 log_every = 10
 history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
 best_val_acc = 0.0
 best_epoch = -1
 ckpt_path = "best_model.pth"
 print("Starting training")
-print(f"Total epochs: {n_epochs} | device: {device} | optimizer: {optimizer} | loss: CrossEntropyLoss")
+print(f"Total epochs: {n_epochs} | device: {device} | optimizer: Adam | loss: CrossEntropyLoss")
 
 for epoch in range(n_epochs):
     train_loss, train_acc = train_one_epoch(model, train_loader)
