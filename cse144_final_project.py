@@ -71,7 +71,7 @@ for param in model.layer4.parameters():
 
 model.fc = nn.Linear(model.fc.in_features, 100)
 
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -79,23 +79,8 @@ optimizer = torch.optim.Adam(
     filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3
 )
 
-
-#!!! from here we can implement training loop !!!!
-
-# show dataset files
-for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames[:5]:
-        print(os.path.join(dirname, filename))
-
-
-#TO DO (aria push test)
-# Create dataloader
-# Modify resnet layer to 100 classes
-# start training
-# train on 20 epochs
-
 # ---------------------- Training ----------------------
-n_epochs = 5
+n_epochs = 10
 log_every = 10
 
 print("Starting training")
@@ -134,23 +119,29 @@ for epoch in range(1, n_epochs + 1):
 
     epoch_loss = running_loss / seen
     epoch_acc = correct / seen
-    print(f"Epoch {epoch}/{n_epochs} complete -> loss: {epoch_loss:.4f}, acc: {epoch_acc:.4f}")
+    print(f"Epoch {epoch}/{n_epochs} complete -> train_loss: {epoch_loss:.4f}, train_acc: {epoch_acc:.4f}")
+
+    # Validate at end of each epoch
+    model.eval()
+    val_loss_total, val_correct, val_seen = 0.0, 0, 0
+    with torch.no_grad():
+        for x, y in dv_set:
+            x, y = x.to(device), y.to(device).long()
+            pred = model(x)
+            loss = criterion(pred, y)
+
+            batch_size = x.size(0)
+            val_loss_total += loss.item() * batch_size
+            val_correct += (torch.argmax(pred, dim=1) == y).sum().item()
+            val_seen += batch_size
+
+    val_loss = val_loss_total / val_seen if val_seen > 0 else 0.0
+    val_acc = val_correct / val_seen if val_seen > 0 else 0.0
+    print(f"Epoch {epoch}/{n_epochs} validation -> val_loss: {val_loss:.4f}, val_acc: {val_acc:.4f}")
+    model.train()
 
 print("\nTraining complete")
 
-model.eval()  # set model to evaluation mode
-
-total_loss = 0.0
-
-with torch.no_grad():
-    for x, y in dv_set:  # iterate through the validation dataloader
-        x, y = x.to(device), y.to(device)  # move data to device
-        pred = model(x)                    # forward pass
-        loss = criterion(pred, y)          # compute loss
-        total_loss += loss.item() * len(x) # accumulate over samples
-
-avg_loss = total_loss / len(dv_set.dataset)  # averaged by total samples
-print(f"Validation Loss: {avg_loss:.4f}")
 
 
 #!!! from here we can implement training loop !!!!
