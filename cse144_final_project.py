@@ -49,6 +49,7 @@ train_dataset, val_set = torch.utils.data.random_split(full_train, [train_size, 
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader   = DataLoader(val_set,   batch_size=64, shuffle=False)
+dv_set = val_loader
 
 
 print("Number of training images:", len(full_train))
@@ -94,7 +95,7 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
 # train on 20 epochs
 
 # ---------------------- Training ----------------------
-n_epochs = 10
+n_epochs = 5
 log_every = 10
 
 print("Starting training")
@@ -137,32 +138,19 @@ for epoch in range(1, n_epochs + 1):
 
 print("\nTraining complete")
 
-model.eval()
+model.eval()  # set model to evaluation mode
+
 total_loss = 0.0
-total_correct = 0
-total_samples = 0
 
 with torch.no_grad():
-    for x, y in dv_set:
-        x, y = x.to(device), y.to(device).long()
+    for x, y in dv_set:  # iterate through the validation dataloader
+        x, y = x.to(device), y.to(device)  # move data to device
+        pred = model(x)                    # forward pass
+        loss = criterion(pred, y)          # compute loss
+        total_loss += loss.item() * len(x) # accumulate over samples
 
-        pred = model(x)
-        loss = criterion(pred, y)
-
-        batch_size = x.size(0)
-        total_loss += loss.item() * batch_size
-
-        # optional but useful
-        preds = torch.argmax(pred, dim=1)
-        total_correct += (preds == y).sum().item()
-        total_samples += batch_size
-
-avg_loss = total_loss / len(dv_set.dataset)
-avg_acc = total_correct / total_samples if total_samples > 0 else 0.0
-
-print(f"Validation loss: {avg_loss:.4f}")
-print(f"Validation acc:  {avg_acc:.4f}")   # optional
-
+avg_loss = total_loss / len(dv_set.dataset)  # averaged by total samples
+print(f"Validation Loss: {avg_loss:.4f}")
 
 
 #!!! from here we can implement training loop !!!!
@@ -178,4 +166,3 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
 # Modify resnet layer to 100 classes
 # start training
 # train on 20 epochs
-
