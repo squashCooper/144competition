@@ -57,8 +57,8 @@ print("Classes:", full_train.classes[:10])
 
 # --MODEL-------
 
-# load pretrained resnet
-model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+# load pretrained resnet - (RESNET50)
+model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 print("Model loaded successfully")
 
 # Freeze all layers first
