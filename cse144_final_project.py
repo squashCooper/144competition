@@ -168,3 +168,26 @@ with torch.no_grad():
 
 avg_loss = total_loss / len(dv_set.dataset)  # averaged by total samples
 print(f"Validation Loss: {avg_loss:.4f}")
+
+#----GRAPHS---------
+epoch_graph = range(1, len(history["train_loss"])+1)
+
+#loss
+plt.figure()
+plt.plot(epoch_graph, history["train_loss"], label = "Train Loss")
+plt.plot(epoch_graph, history["val_loss"], label = "Val Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Training vs. Val Loss")
+plt.legend()
+plt.show()
+
+#accuracy
+plt.figure()
+plt.plot(epoch_graph, history["train_acc"], label = "Train Accuracy")
+plt.plot(epoch_graph, history["val_acc"], label = "Val Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Training vs. Val Accuracy")
+plt.legend()
+plt.show()
