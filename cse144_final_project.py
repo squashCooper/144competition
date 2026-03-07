@@ -58,8 +58,6 @@ def evaluate(model, loader):
     return avg_loss, accuracy
 
 # -- PREPROCESSING -------
-
-
 class PreProcessing(ImageFolder):
     # data augmentation
     # resize, randomly rotate, random brightness, normalize
@@ -98,7 +96,7 @@ dv_set = val_loader
 print("Number of training images:", len(full_train))
 print("Classes:", full_train.classes[:10])
 
-# --MODEL-------
+# --MODEL-------------
 
 # load pretrained resnet
 model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
@@ -123,8 +121,6 @@ optimizer = torch.optim.AdamW(
     lr=2e-4, 
     weight_decay=1e-2
 )
-
-#!!! from here we can implement training loop !!!!
 
 # show dataset files
 for dirname, _, filenames in os.walk('/kaggle/input'):
