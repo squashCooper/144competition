@@ -1,3 +1,15 @@
+#random seed = 135
+# val transform + train transform
+# freeze last two layers
+# 25 epochs
+# reduce lr on plateau 
+    # patience = 3 epochs
+    # factor = 0.5
+# dropout = 0.3
+# split = 90/10
+# checkpoint on val_loss
+
+
 import numpy as np
 import pandas as pd
 import os
@@ -15,6 +27,7 @@ import torchvision.models as models
 
 import torch.nn as nn
 
+SEED = 135
 
 # -- PREPROCESSING -------
 class PreProcessing(ImageFolder):
@@ -60,8 +73,18 @@ total = len(full_train)
 val_size = int(0.1 * total)
 train_size = total - val_size  
 
-train_dataset, val_split = torch.utils.data.random_split(full_train, [train_size, val_size])
-val_dataset = torch.utils.data.Subset(full_val, val_split.indices)
+#UNCOMMENT FOR RANDOM SEED
+indices = torch.randperm(total, generator=torch.Generator().manual_seed(SEED))
+train_indices = indices[:train_size]
+val_indices = indices[train_size:]
+
+train_dataset = torch.utils.data.Subset(full_train, train_indices)
+val_dataset = torch.utils.data.Subset(full_val, val_indices)
+
+#UNCOMMENT FOR NO RANDOM SEED
+#train_dataset, val_split = torch.utils.data.random_split(full_train, [train_size, val_size])
+#val_dataset = torch.utils.data.Subset(full_val, val_split.indices)
+
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader   = DataLoader(val_dataset, batch_size=64, shuffle=False)
 dv_set = val_loader
@@ -131,7 +154,7 @@ for param in model.layer4.parameters():
     param.requires_grad = True
 
 model.fc = nn.Sequential(
-    nn.Dropout(0.5),
+    nn.Dropout(0.3),
     nn.Linear(model.fc.in_features, 100)
 )
 
@@ -139,11 +162,11 @@ device = torch.device("cuda")
 model = model.to(device)
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-optimizer = torch.optim.AdamW(
-    filter(lambda p: p.requires_grad, model.parameters()),
-    lr=2e-4,
-    weight_decay=1e-2
-)
+optimizer = torch.optim.AdamW([
+    {'params': model.layer3.parameters(), 'lr': 5e-5},
+    {'params': model.layer4.parameters(), 'lr': 1e-4},
+    {'params': model.fc.parameters(),     'lr': 2e-4},
+], weight_decay=1e-2)
 
 #!!! from here we can implement training loop !!!!
 
@@ -153,11 +176,11 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
         print(os.path.join(dirname, filename))
 
 # ---------------------- Training ----------------------
-n_epochs = 20
+n_epochs = 25
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
 log_every = 10
 history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
-best_val_acc = 0.0
+best_val_loss = float('inf')
 best_epoch = -1
 ckpt_path = "best_model.pth"
 print("Starting training")
@@ -171,8 +194,8 @@ for epoch in range(n_epochs):
     history["val_loss"].append(val_loss)
     history["val_acc"].append(val_acc)
 
-    if val_acc > best_val_acc:
-        best_val_acc = val_acc
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
         best_epoch = epoch + 1
         torch.save({"model_state_dict": model.state_dict(), "epoch": best_epoch}, ckpt_path)
 
